@@ -46,7 +46,7 @@ Push to `main`. Then set **Settings → Pages → Source** to **GitHub Actions**
 
 ## How the score works
 
-`public/lib/buzzwords.js` has 119 terms in five categories, each worth 1–3 points. The score is buzzword points per 100 words, on a curve that tops out at 100 (`public/lib/score.js`). The same text always gets the same score. To change what counts, edit the word list.
+`public/lib/buzzwords.js` has 266 terms in six categories, each worth 1–3 points. The score is buzzword points per 100 words, on a curve that tops out at 100 (`public/lib/score.js`). The same text always gets the same score. To change what counts, edit the word list.
 
 ## Security note
 

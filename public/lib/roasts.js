@@ -40,6 +40,7 @@ const TIER_LINES = {
 const CATEGORY_QUIPS = {
   ai: "Somewhere, a GPU just blushed.",
   corporate: "Please print this and laminate it for the break room.",
+  marketing: "*Results not typical. Meaning sold separately.",
   startup: "Burn rate: high. Runway: vibes.",
   linkedin: "Agree? 👇",
   web3: "Bold of you to bring this back. Respect.",

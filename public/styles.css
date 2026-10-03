@@ -10,6 +10,7 @@
 
   --hl-ai: #b9dcff;
   --hl-corporate: #ffe36e;
+  --hl-marketing: #dcc9ff;
   --hl-startup: #ffc58f;
   --hl-linkedin: #ffbcd0;
   --hl-web3: #bdeeb3;
@@ -34,6 +35,7 @@
 
     --hl-ai: rgb(110 170 255 / 0.38);
     --hl-corporate: rgb(255 214 60 / 0.38);
+    --hl-marketing: rgb(170 120 255 / 0.38);
     --hl-startup: rgb(255 150 60 / 0.38);
     --hl-linkedin: rgb(255 110 160 / 0.38);
     --hl-web3: rgb(110 220 120 / 0.34);
@@ -252,6 +254,7 @@ mark {
   box-decoration-break: clone; -webkit-box-decoration-break: clone;
 }
 [data-cat="corporate"] { --swatch: var(--hl-corporate); }
+[data-cat="marketing"] { --swatch: var(--hl-marketing); }
 [data-cat="ai"] { --swatch: var(--hl-ai); }
 [data-cat="startup"] { --swatch: var(--hl-startup); }
 [data-cat="linkedin"] { --swatch: var(--hl-linkedin); }
