@@ -21,29 +21,19 @@
       <h1>The Buzzword Index</h1>
       <p class="standfirst">Daily hype quotations for the discerning reader of press releases, pitch decks &amp; LinkedIn.</p>
     </div>
-    <div class="ticker" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+    <div class="ticker">
+      <div class="ticker-viewport" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+      <button type="button" class="ticker-toggle" id="ticker-toggle" aria-pressed="false" aria-label="Pause ticker">❚❚</button>
+    </div>
   </header>
 
   <main class="wrap">
     <form id="form" class="desk" novalidate>
-      <fieldset class="mode" id="mode" hidden>
-        <legend class="sr-only">What do you want to rate?</legend>
-        <label><input type="radio" name="mode" value="text" checked> Text or post</label>
-        <label><input type="radio" name="mode" value="url"> Link</label>
-      </fieldset>
-
-      <div class="field" id="text-field">
+      <div class="field">
         <label for="text">Submit your text for appraisal</label>
         <textarea id="text" name="text" rows="9" maxlength="20000" aria-describedby="text-hint form-error"
           placeholder="Paste a post, a pitch, a press release, or that email from your VP…"></textarea>
-        <p class="hint" id="text-hint"><span id="count">0</span> / 20,000 characters · <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> to rate</p>
-      </div>
-
-      <div class="field" id="url-field" hidden>
-        <label for="url">Link to a public web page</label>
-        <input id="url" name="url" type="url" inputmode="url" autocomplete="url" aria-describedby="url-hint form-error"
-          placeholder="https://example.com/blog/our-ai-journey">
-        <p class="hint" id="url-hint">Blog posts, press releases and articles work best. LinkedIn and X hide posts behind a login, so paste those as text.</p>
+        <p class="hint" id="text-hint"><span class="kbd-hint"><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> to rate</span> <span id="count"></span></p>
       </div>
 
       <p class="error" id="form-error" role="alert"></p>
@@ -56,24 +46,23 @@
 
     <section id="result" class="result" hidden aria-labelledby="result-heading">
       <h2 id="result-heading" tabindex="-1" class="sr-only">Your rating</h2>
+      <p class="stale-note" id="stale-note" hidden>You've changed the text since this rating. Rate it again to update.</p>
 
       <div class="quote">
-        <div class="quote-main">
+        <div>
           <p class="label">Buzzword Index</p>
           <p class="score"><span id="score">0</span><span class="of">/100</span></p>
-          <p class="delta" id="delta"></p>
         </div>
-        <div class="quote-tier">
+        <div>
           <p class="label">Rating</p>
           <p class="tier" id="tier"></p>
           <p class="tagline" id="tagline"></p>
         </div>
       </div>
 
-      <div class="gauge" id="gauge" role="img">
+      <div class="gauge" aria-hidden="true">
         <div class="gauge-bands" id="bands"></div>
         <div class="needle" id="needle"></div>
-        <div class="gauge-ends"><span>Refreshingly human</span><span>Synergy singularity</span></div>
       </div>
 
       <figure class="critic" aria-live="polite" aria-busy="false" id="critic">
@@ -81,34 +70,28 @@
         <blockquote id="roast"></blockquote>
       </figure>
 
-      <dl class="stats">
-        <div><dt>Words</dt><dd id="stat-words"></dd></div>
-        <div><dt>Buzzwords</dt><dd id="stat-hits"></dd></div>
-        <div><dt>Hype per 100 words</dt><dd id="stat-density"></dd></div>
-      </dl>
-
-      <div class="columns" id="breakdown">
-        <section>
-          <h3>Worst offenders</h3>
-          <ol class="offenders" id="offenders"></ol>
-        </section>
-        <section>
-          <h3>By category</h3>
-          <ul class="categories" id="categories"></ul>
-        </section>
-      </div>
-
-      <section class="annotated">
-        <h3>Your text, annotated <span class="from" id="from"></span></h3>
-        <p class="legend" id="legend"></p>
-        <div class="annotated-text" id="annotated"></div>
-      </section>
-
       <div class="actions">
         <button type="button" class="primary" id="copy">Copy result</button>
         <button type="button" class="ghost" id="again">Rate another</button>
         <span class="sr-only" role="status" id="copy-status"></span>
       </div>
+
+      <section class="annotated" id="annotated-section">
+        <h3>Your text, annotated <span class="from" id="from"></span></h3>
+        <ul class="legend" id="legend" aria-label="Points by category"></ul>
+        <div class="annotated-text" id="annotated"></div>
+      </section>
+
+      <details class="breakdown" id="breakdown">
+        <summary>Full breakdown</summary>
+        <dl class="stats">
+          <div><dt>Words</dt><dd id="stat-words"></dd></div>
+          <div><dt>Buzzwords</dt><dd id="stat-hits"></dd></div>
+          <div><dt>Hype per 100 words</dt><dd id="stat-density"></dd></div>
+        </dl>
+        <h3>Worst offenders</h3>
+        <ol class="offenders" id="offenders"></ol>
+      </details>
     </section>
 
     <details class="method">

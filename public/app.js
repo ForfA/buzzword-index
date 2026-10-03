@@ -17,7 +17,11 @@ Agree? 👇`,
   `Hi all — quick update on the outage. The database ran out of disk at 02:14. We added space, restarted the service, and everything was back by 02:40. To stop it happening again we've set up an alert at 80% disk usage. Sorry for the trouble, and thanks for your patience.`,
 ];
 
-const state = { server: null, mode: "text", exampleIndex: 0, source: "", lastSummary: "" };
+// Only "low" tiers get the calm colour on the gauge.
+const CALM_TIERS = new Set(["human", "seasoned"]);
+const COUNT_FROM = MAX_CHARS * 0.9;
+
+const state = { server: null, exampleIndex: 0, source: "", lastSummary: "" };
 
 /* ——— Masthead ——— */
 
@@ -48,15 +52,19 @@ function renderMasthead() {
   const track = $("ticker");
   for (let copy = 0; copy < 2; copy++) {
     for (const item of items) {
-      const el = document.createElement("span");
-      el.className = "ticker-item";
-      const arrow = document.createElement("span");
-      arrow.className = item.up ? "up" : "down";
-      arrow.textContent = `${item.up ? "▲" : "▼"} ${item.change}%`;
-      el.append(`${item.name} `, arrow);
-      track.append(el);
+      const arrow = el("span", { class: item.up ? "up" : "down" }, `${item.up ? "▲" : "▼"} ${item.change}%`);
+      track.append(el("span", { class: "ticker-item" }, `${item.name} `, arrow));
     }
   }
+}
+
+function toggleTicker() {
+  const btn = $("ticker-toggle");
+  const paused = btn.getAttribute("aria-pressed") !== "true";
+  btn.setAttribute("aria-pressed", String(paused));
+  btn.setAttribute("aria-label", paused ? "Play ticker" : "Pause ticker");
+  btn.textContent = paused ? "▶" : "❚❚";
+  btn.closest(".ticker").classList.toggle("paused", paused);
 }
 
 /* ——— Server capabilities ——— */
@@ -74,7 +82,7 @@ async function detectServer() {
 function applyServer(server) {
   state.server = server;
   if (!server) return;
-  $("mode").hidden = !server.extract;
+  if (server.extract) $("text").placeholder = "Paste a post, a pitch, a press release — or a link to a public page…";
   const ai = server.ai ? `roasts are written by ${server.ai.provider} (${server.ai.model})` : "roasts come from the house collection";
   $("privacy").textContent =
     `Your text is scored in your browser. Links are fetched by your local server, ${ai}. Nothing is stored.`;
@@ -82,27 +90,27 @@ function applyServer(server) {
 
 /* ——— Form ——— */
 
-function setMode(mode) {
-  state.mode = mode;
-  $("text-field").hidden = mode !== "text";
-  $("url-field").hidden = mode !== "url";
-  $("example").hidden = mode !== "text";
-  showError("");
+// A lone URL (and nothing else) means "fetch this page".
+function asLink(input) {
+  if (!/^(https?:\/\/|www\.)\S+$/i.test(input)) return null;
+  return input.startsWith("www.") ? `https://${input}` : input;
 }
 
-function showError(message, field) {
+function showError(message) {
   $("form-error").textContent = message;
-  for (const el of [$("text"), $("url")]) el.removeAttribute("aria-invalid");
-  if (message && field) {
-    field.setAttribute("aria-invalid", "true");
-    field.focus();
+  const text = $("text");
+  if (message) {
+    text.setAttribute("aria-invalid", "true");
+    text.focus();
+  } else {
+    text.removeAttribute("aria-invalid");
   }
 }
 
-function setBusy(busy) {
+function setBusy(label) {
   const btn = $("submit");
-  btn.disabled = busy;
-  btn.textContent = busy ? (state.mode === "url" ? "Fetching the page…" : "Rating…") : "Rate the hype";
+  btn.disabled = Boolean(label);
+  btn.textContent = label || "Rate the hype";
 }
 
 async function postJson(path, body) {
@@ -120,28 +128,28 @@ async function onSubmit(event) {
   event.preventDefault();
   showError("");
 
-  if (state.mode === "url") {
-    const url = $("url").value.trim();
-    if (!url) return showError("Paste a link first.", $("url"));
-    setBusy(true);
+  const link = asLink($("text").value.trim());
+  if (link) {
+    if (!state.server?.extract) {
+      return showError("This version can't fetch links. Open the page, copy its text and paste it here instead.");
+    }
+    setBusy("Fetching that link…");
     try {
-      const page = await postJson("api/extract", { url });
+      const page = await postJson("api/extract", { url: link });
       $("text").value = page.text;
       updateCount();
       state.source = page.title || new URL(page.url).hostname;
       if (page.truncated) state.source += ` · first ${MAX_CHARS.toLocaleString("en")} characters`;
-      document.querySelector('input[name="mode"][value="text"]').checked = true;
-      setMode("text");
     } catch (err) {
-      setBusy(false);
-      return showError(err.message, $("url"));
+      return showError(err.message);
+    } finally {
+      setBusy("");
     }
-    setBusy(false);
   }
 
   const text = $("text").value;
   const problem = validateText(text);
-  if (problem) return showError(problem, $("text"));
+  if (problem) return showError(problem);
   render(text);
 }
 
@@ -166,56 +174,45 @@ function countUp(node, target) {
 }
 
 function renderGauge(result) {
-  const bands = $("bands");
-  bands.replaceChildren(
+  const calm = CALM_TIERS.has(result.tier.id);
+  $("bands").replaceChildren(
     ...TIERS.map((t, i) => {
-      const width = (TIERS[i + 1]?.min ?? 100) - t.min;
-      const band = el("div", { class: "band", title: t.name, style: `flex: ${width}` });
-      band.classList.toggle("on", t.id === result.tier.id);
+      const band = el("div", { class: "band", style: `flex: ${(TIERS[i + 1]?.min ?? 100) - t.min}` });
+      if (t.id === result.tier.id) band.classList.add("on", calm ? "calm" : "hype");
       return band;
     }),
   );
-  $("gauge").setAttribute("aria-label", `Gauge: ${result.score} out of 100, tier ${result.tier.name}`);
   const needle = $("needle");
-  needle.style.left = "0%";
-  requestAnimationFrame(() => requestAnimationFrame(() => (needle.style.left = `${result.score}%`)));
+  needle.style.setProperty("--pos", 0);
+  requestAnimationFrame(() => requestAnimationFrame(() => needle.style.setProperty("--pos", result.score / 100)));
 }
 
-function renderAnnotated(text, hits) {
+function renderAnnotated(text, result) {
   const out = [];
   let pos = 0;
-  for (const h of hits) {
+  for (const h of result.hits) {
     if (h.start > pos) out.push(text.slice(pos, h.start));
-    out.push(el("mark", { "data-cat": h.category, title: `${CATEGORIES[h.category].label} · +${h.weight}` }, h.text));
+    const label = CATEGORIES[h.category].label;
+    out.push(el("mark", { "data-cat": h.category, title: `${label} · +${h.weight}` }, h.text, el("span", { class: "sr-only" }, ` (${label})`)));
     pos = h.end;
   }
   out.push(text.slice(pos));
   $("annotated").replaceChildren(...out);
+
+  // The legend doubles as the category summary.
+  $("legend").replaceChildren(
+    ...result.categories.map((c) => el("li", { "data-cat": c.id }, `${c.label} `, el("span", { class: "pts" }, `${c.points} pts`))),
+  );
 }
 
 function renderBreakdown(result) {
-  $("breakdown").hidden = result.hits.length === 0;
+  $("stat-words").textContent = result.wordCount.toLocaleString("en");
+  $("stat-hits").textContent = result.hits.length;
+  $("stat-density").textContent = result.density;
   $("offenders").replaceChildren(
-    ...result.offenders.slice(0, 6).map((o) =>
+    ...result.offenders.slice(0, 8).map((o) =>
       el("li", {}, el("span", { class: "term" }, o.term), el("span", { class: "count" }, `×${o.count} · ${o.points} pts`)),
     ),
-  );
-  const max = Math.max(1, ...result.categories.map((c) => c.points));
-  $("categories").replaceChildren(
-    ...result.categories.map((c) =>
-      el(
-        "li",
-        { "data-cat": c.id },
-        el("div", { class: "row" }, el("span", {}, c.label), el("span", { class: "pts" }, `${c.points} pts`)),
-        el("div", { class: "bar", "aria-hidden": "true" }, el("span", { style: `width: ${(c.points / max) * 100}%` })),
-      ),
-    ),
-  );
-  const used = new Set(result.hits.map((h) => h.category));
-  $("legend").replaceChildren(
-    ...Object.entries(CATEGORIES)
-      .filter(([id]) => used.has(id))
-      .map(([id, c]) => el("span", { "data-cat": id }, c.label)),
   );
 }
 
@@ -239,7 +236,7 @@ async function renderRoast(result, text) {
   } catch {
     reply = { roast: fallback(), source: "house" };
   }
-  if ($("text").dataset.rendered !== text) return; // a newer rating replaced this one
+  if (state.rendered !== text) return; // a newer rating replaced this one
   critic.setAttribute("aria-busy", "false");
   roast.textContent = reply.roast;
   source.textContent = reply.source === "ai" ? `AI critic · ${state.server.ai.model}` : "House roast";
@@ -252,23 +249,22 @@ function summary(result, roast) {
 
 function render(text) {
   const result = analyze(text);
-  $("text").dataset.rendered = text;
+  const hasHits = result.hits.length > 0;
+  state.rendered = text;
+  markStale(false);
   $("result").hidden = false;
 
+  $("result-heading").textContent = `Your rating: ${result.score}/100, ${result.tier.name}`;
   countUp($("score"), result.score);
-  const delta = $("delta");
-  delta.textContent = result.score ? `▲ ${result.score} pts above plain English` : "▬ Unchanged. Remarkable.";
-  delta.classList.toggle("calm", result.score < 10);
   $("tier").textContent = result.tier.name;
   $("tagline").textContent = result.tier.tagline;
   renderGauge(result);
 
-  $("stat-words").textContent = result.wordCount.toLocaleString("en");
-  $("stat-hits").textContent = result.hits.length;
-  $("stat-density").textContent = result.density;
-  renderBreakdown(result);
+  $("annotated-section").hidden = !hasHits;
+  $("breakdown").hidden = !hasHits;
   $("from").textContent = state.source ? `— from ${state.source}` : "";
-  renderAnnotated(text, result.hits);
+  renderAnnotated(text, result);
+  renderBreakdown(result);
 
   state.lastSummary = summary(result, houseRoast(result, text));
   renderRoast(result, text);
@@ -277,10 +273,16 @@ function render(text) {
   $("result-heading").focus({ preventScroll: true });
 }
 
+function markStale(stale) {
+  $("result").classList.toggle("stale", stale);
+  $("stale-note").hidden = !stale;
+}
+
 /* ——— Wiring ——— */
 
 function updateCount() {
-  $("count").textContent = $("text").value.length.toLocaleString("en");
+  const n = $("text").value.length;
+  $("count").textContent = n >= COUNT_FROM ? `${n.toLocaleString("en")} / ${MAX_CHARS.toLocaleString("en")} characters` : "";
 }
 
 async function copyResult() {
@@ -302,10 +304,11 @@ function init() {
   detectServer().then(applyServer);
 
   $("form").addEventListener("submit", onSubmit);
-  $("mode").addEventListener("change", (e) => setMode(e.target.value));
+  $("ticker-toggle").addEventListener("click", toggleTicker);
   $("text").addEventListener("input", () => {
     updateCount();
     state.source = ""; // edited text no longer matches the fetched page
+    if (!$("result").hidden) markStale($("text").value !== state.rendered);
   });
   $("form").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) $("form").requestSubmit();
@@ -316,16 +319,19 @@ function init() {
     state.source = "";
     updateCount();
     showError("");
+    if (!$("result").hidden) markStale($("text").value !== state.rendered);
     $("text").focus();
   });
   $("copy").addEventListener("click", copyResult);
   $("again").addEventListener("click", () => {
     $("text").value = "";
-    $("url").value = "";
     state.source = "";
+    state.rendered = null;
+    $("result").hidden = true;
     updateCount();
+    showError("");
     window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
-    $(state.mode === "url" ? "url" : "text").focus({ preventScroll: true });
+    $("text").focus({ preventScroll: true });
   });
 }
 

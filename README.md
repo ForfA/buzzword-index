@@ -42,11 +42,11 @@ AI_PROVIDER=openai AI_BASE_URL=http://localhost:11434/v1 AI_MODEL=llama3.2 npm s
 
 ### GitHub Pages
 
-Push to `main`. Then set **Settings → Pages → Source** to **GitHub Actions**. The workflow in `.github/workflows/pages.yml` runs the tests and publishes `public/`. The page detects that no server is present and hides link mode.
+Push to `main`. Then set **Settings → Pages → Source** to **GitHub Actions**. The workflow in `.github/workflows/pages.yml` runs the tests and publishes `public/`. The page detects that no server is present; pasting a link there asks the visitor to paste the page text instead.
 
 ## How the score works
 
-`public/lib/buzzwords.js` has 266 terms in six categories, each worth 1–3 points. The score is buzzword points per 100 words, on a curve that tops out at 100 (`public/lib/score.js`). The same text always gets the same score. To change what counts, edit the word list.
+`public/lib/buzzwords.js` holds the dictionary: a few hundred terms in six categories, each worth 1–3 points. The score is buzzword points per 100 words, on a curve that tops out at 100 (`public/lib/score.js`). The same text always gets the same score. To change what counts, edit the word list.
 
 ## Security note
 

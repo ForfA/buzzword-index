@@ -52,7 +52,6 @@ export const BUZZWORDS = [
   { term: "AGI", weight: 2, category: "ai" },
   { term: "superintelligence", pattern: "superintelligen(?:ce|t)", weight: 3, category: "ai" },
   { term: "intelligent automation", weight: 2, category: "ai" },
-  { term: "machine learning", weight: 1, category: "ai" },
   { term: "copilot", pattern: "co-?pilots?", weight: 1, category: "ai" },
   { term: "delve into", pattern: "delv(?:e|es|ed|ing)\\s+(?:deep(?:er|ly)?\\s+)?into", weight: 2, category: "ai" },
   { term: "rich tapestry", pattern: "(?:rich|vibrant|intricate)\\s+tapestr(?:y|ies)", weight: 2, category: "ai" },
