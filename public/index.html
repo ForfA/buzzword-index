@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Buzzword Index</title>
+  <meta name="description" content="Paste a post, pitch or press release and get its buzzword rating — with a roast.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#text">Skip to the text box</a>
+
+  <header class="masthead">
+    <div class="wrap">
+      <p class="dateline"><span id="edition">Vol. 1</span><span>Price: two synergies</span></p>
+      <h1>The Buzzword Index</h1>
+      <p class="standfirst">Daily hype quotations for the discerning reader of press releases, pitch decks &amp; LinkedIn.</p>
+    </div>
+    <div class="ticker" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+  </header>
+
+  <main class="wrap">
+    <form id="form" class="desk" novalidate>
+      <fieldset class="mode" id="mode" hidden>
+        <legend class="sr-only">What do you want to rate?</legend>
+        <label><input type="radio" name="mode" value="text" checked> Text or post</label>
+        <label><input type="radio" name="mode" value="url"> Link</label>
+      </fieldset>
+
+      <div class="field" id="text-field">
+        <label for="text">Submit your text for appraisal</label>
+        <textarea id="text" name="text" rows="9" maxlength="20000" aria-describedby="text-hint form-error"
+          placeholder="Paste a post, a pitch, a press release, or that email from your VP…"></textarea>
+        <p class="hint" id="text-hint"><span id="count">0</span> / 20,000 characters · <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> to rate</p>
+      </div>
+
+      <div class="field" id="url-field" hidden>
+        <label for="url">Link to a public web page</label>
+        <input id="url" name="url" type="url" inputmode="url" autocomplete="url" aria-describedby="url-hint form-error"
+          placeholder="https://example.com/blog/our-ai-journey">
+        <p class="hint" id="url-hint">Blog posts, press releases and articles work best. LinkedIn and X hide posts behind a login, so paste those as text.</p>
+      </div>
+
+      <p class="error" id="form-error" role="alert"></p>
+
+      <div class="actions">
+        <button type="submit" class="primary" id="submit">Rate the hype</button>
+        <button type="button" class="ghost" id="example">Try an example</button>
+      </div>
+    </form>
+
+    <section id="result" class="result" hidden aria-labelledby="result-heading">
+      <h2 id="result-heading" tabindex="-1" class="sr-only">Your rating</h2>
+
+      <div class="quote">
+        <div class="quote-main">
+          <p class="label">Buzzword Index</p>
+          <p class="score"><span id="score">0</span><span class="of">/100</span></p>
+          <p class="delta" id="delta"></p>
+        </div>
+        <div class="quote-tier">
+          <p class="label">Rating</p>
+          <p class="tier" id="tier"></p>
+          <p class="tagline" id="tagline"></p>
+        </div>
+      </div>
+
+      <div class="gauge" id="gauge" role="img">
+        <div class="gauge-bands" id="bands"></div>
+        <div class="needle" id="needle"></div>
+        <div class="gauge-ends"><span>Refreshingly human</span><span>Synergy singularity</span></div>
+      </div>
+
+      <figure class="critic" aria-live="polite" aria-busy="false" id="critic">
+        <figcaption><span class="label">The critic's take</span> <span class="source" id="source"></span></figcaption>
+        <blockquote id="roast"></blockquote>
+      </figure>
+
+      <dl class="stats">
+        <div><dt>Words</dt><dd id="stat-words"></dd></div>
+        <div><dt>Buzzwords</dt><dd id="stat-hits"></dd></div>
+        <div><dt>Hype per 100 words</dt><dd id="stat-density"></dd></div>
+      </dl>
+
+      <div class="columns" id="breakdown">
+        <section>
+          <h3>Worst offenders</h3>
+          <ol class="offenders" id="offenders"></ol>
+        </section>
+        <section>
+          <h3>By category</h3>
+          <ul class="categories" id="categories"></ul>
+        </section>
+      </div>
+
+      <section class="annotated">
+        <h3>Your text, annotated <span class="from" id="from"></span></h3>
+        <p class="legend" id="legend"></p>
+        <div class="annotated-text" id="annotated"></div>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="primary" id="copy">Copy result</button>
+        <button type="button" class="ghost" id="again">Rate another</button>
+        <span class="sr-only" role="status" id="copy-status"></span>
+      </div>
+    </section>
+
+    <details class="method">
+      <summary>How the score works</summary>
+      <p>The Index checks your text against a dictionary of <strong id="dict-size">over 100</strong> buzzwords in five categories: AI hype, corporate jargon, startup speak, LinkedIn-isms and Web3 residue. Each word carries 1–3 points, depending on how much meaning it displaces.</p>
+      <p>The score is based on buzzword points per 100 words, on a curve that tops out at 100. So one “robust” in a long email barely registers, but a short post made entirely of “synergy” does. The same text always gets the same score, and every point is highlighted in your text.</p>
+      <p id="privacy">Your text is scored in your browser and never stored.</p>
+    </details>
+  </main>
+
+  <footer class="wrap colophon">
+    <p>The Buzzword Index is satire. No thought leaders were harmed. Probably.</p>
+  </footer>
+</body>
+</html>
